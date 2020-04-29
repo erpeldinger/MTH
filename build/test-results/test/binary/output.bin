@@ -1,0 +1,9 @@
+Schedule de TestToSchedule :  
+E  job numéro 1  tache n° 1 : 0  tache n° 2 : 3  tache n° 3 : 6  
+J  job numéro 2  tache n° 1 : 0  tache n° 2 : 3  tache n° 3 : 8  fin 
+ 
+E  job numéro 1  tache n° 1 : 0  tache n° 2 : 3  tache n° 3 : 6  
+E  job numéro 2  tache n° 1 : 0  tache n° 2 : 3  tache n° 3 : 8 
+SolverSPT created
+debut solve
+SolverSPT.solve terminated
