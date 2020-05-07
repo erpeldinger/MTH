@@ -11,7 +11,7 @@ public class TabooSolver extends DescentSolver {
 
 	@Override
     public Result solve(Instance instance, long deadline) {
-    	//Initialisation
+    	/* ---------------------------------- DECLARATIONS ----------------------------------------------*/
     	GreedySolver greedy = new GreedySolver(2);
     	Result pb = greedy.solve(instance, deadline);
     	//Memorisation de la meilleure solution
@@ -26,6 +26,7 @@ public class TabooSolver extends DescentSolver {
     	int dureeTabou = 3;
     	int maxIter = 100;
     		
+    	/* ---------------------------------- INITIALISATION --------------------------------------------*/
     	//Initialisation du tableau de swaps tabou
     	for(int i=0; i<instance.numMachines-1; i++) {
     		for(int j=0; j<instance.numJobs-1; j++) {
@@ -36,7 +37,8 @@ public class TabooSolver extends DescentSolver {
     	}       	
     	//Exploration des voisinages successifs 
     	while((k<maxIter) && (deadline - System.currentTimeMillis() >= 1)) {
-    		k++;  
+    		k++; 
+        	/* --------------------- EXPLORATION DES VOISINAGES  ----------------------------------------*/
     		//Creation des blocs et swaps du chemin critique
         	ResourceOrder orderSol = new ResourceOrder(current.schedule);
         	List<Block> blocks = blocksOfCriticalPath(orderSol);
@@ -55,6 +57,7 @@ public class TabooSolver extends DescentSolver {
         		s.applyOn(orderSol);
         		neighborsPb.add(orderSol);
         	}   		
+        	/* --------------------- RECHERCHE DU MEILLEUR VOISIN ---------------------------------------*/
     		//Choix du meilleur voisin non tabou
     		for (Swap s : swapTodo) {
     			if(sTaboo[s.machine][s.t1][s.t2] <= k) {
@@ -73,5 +76,4 @@ public class TabooSolver extends DescentSolver {
     	}    		
         return solution;
     }	
-	
 }

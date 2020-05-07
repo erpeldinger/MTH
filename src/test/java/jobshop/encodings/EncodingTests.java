@@ -20,7 +20,7 @@ public class EncodingTests {
     public void testJobNumbers() throws IOException {
         Instance instance = Instance.fromFile(Paths.get("instances/aaa1"));
 
-        // numéro de jobs : 1 2 2 1 1 2 (cf exercices)
+        //Numero de jobs : 1 2 2 1 1 2
         JobNumbers enc = new JobNumbers(instance);
         enc.jobs[enc.nextToSet++] = 0;
         enc.jobs[enc.nextToSet++] = 1;
@@ -38,7 +38,7 @@ public class EncodingTests {
 
 
 
-        // numéro de jobs : 1 1 2 2 1 2
+        //Numero de jobs : 1 1 2 2 1 2
         enc = new JobNumbers(instance);
         enc.jobs[enc.nextToSet++] = 0;
         enc.jobs[enc.nextToSet++] = 0;
@@ -77,6 +77,7 @@ public class EncodingTests {
     }
 
     @Test
+    //Test du toSchedule
     public void testToSchedule() throws IOException {
         Instance instance = Instance.fromFile(Paths.get("instances/aaa1"));
 
@@ -105,7 +106,8 @@ public class EncodingTests {
     }
     
     @Test
-    public void testGreedySolverft06SPT() throws IOException {
+    //Test de l'heuristique gloutonne
+    public void testGreedySolver() throws IOException {
     	Instance instance = Instance.fromFile(Paths.get("instances/ft06"));
         long deadline = System.currentTimeMillis() + 100;
         
@@ -146,6 +148,7 @@ public class EncodingTests {
     }
 
     @Test
+    //Test de la methode de descente
     public void testDescentSolver() throws IOException {
     	Instance instance = Instance.fromFile(Paths.get("instances/ft06"));
         long deadline = System.currentTimeMillis() + 10;
@@ -163,6 +166,7 @@ public class EncodingTests {
     }
     
     @Test
+    //Test de la methode Tabou
     public void testTabooSolver() throws IOException {
     	Instance instance = Instance.fromFile(Paths.get("instances/ft06"));
         long deadline = System.currentTimeMillis() + 10;

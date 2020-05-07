@@ -10,6 +10,7 @@ import jobshop.encodings.Task;
 
 public class GreedySolver implements Solver {
 	
+	//Definit l'algorithme a appliquer
 	private int priority;
 	
 	public GreedySolver(int priority) {
@@ -18,42 +19,39 @@ public class GreedySolver implements Solver {
 	
     @Override
     public Result solve(Instance instance, long deadline) {
+    	/* ---------------------------------- DECLARATIONS ----------------------------------------------*/
     	ResourceOrder resource = new ResourceOrder(instance);
-    	int[] currentTimesPerMachine = new int[instance.numMachines];
-    	int[] currentTimesPerJob = new int[instance.numJobs];
+    	//Tableaux des taches a realiser, realisables et realisees
     	ArrayList<Task> toDo = new ArrayList<Task>(); 
     	ArrayList<Task> done = new ArrayList<Task>();
     	ArrayList<Task> realisable = new ArrayList<Task>();
-    	int[] remainingTime = new int[instance.numJobs];
-    	int[] tasksPerJob = new int[instance.numMachines];
-    	Task next = null;
+    	//Tableau des temps restants (utilise pour LRPT)
+        int[] remainingTime = new int[instance.numJobs];
+        //Representation des taches par job
+        int[] tasksPerJob = new int[instance.numMachines];
+        //Temps actuels des taches par machine
+        int[] currentTimesPerMachine = new int[instance.numMachines];
+        //Temps actuels des taches par job       
+        int[] currentTimesPerJob = new int[instance.numJobs];        
+    	Task next = null;	
     	
-    	for (int i=0; i<instance.numMachines; i++) {
+    	/* ---------------------------------- INITIALISATION --------------------------------------------*/
+    	for (int i=0; i<instance.numJobs; i++) {
+            currentTimesPerJob[i] = 0;
+        }
+        for (int i=0; i<instance.numMachines; i++) {
     		tasksPerJob[i] = 0;
     	}  
-    	//Temps restant pour LRPT
+    	for (int i=0; i<instance.numMachines; i++) {
+            currentTimesPerMachine[i] = 0;
+        }
+        //Temps restant pour LRPT
     	for (int i=0; i<instance.numJobs; i++) {
     		remainingTime[i]=0;
             for(int j=0; j< instance.numTasks; j++){
                 remainingTime[i]+=instance.duration(i,j);
             }
-    	}    	
-    	/*for (int i=0; i<instance.numJobs; i++) {
-    		for(int j=0; j<instance.numTasks; j++) {
-    			times[i][j]=0;
-    		}
-    	}*/
-    	for (int i=0; i<instance.numMachines; i++) {
-    		currentTimesPerMachine[i] = 0;
-    	}
-    	for (int i=0; i<instance.numJobs; i++) {
-    		currentTimesPerJob[i] = 0;
-    	}
-
-
-    	//Schedule sched = new Schedule(instance,times);
-    	//EST est = new EST(times, currentTimesPerMachine, currentTimesPerJob, next);
-    	
+    	}  
     	//Recuperation des taches realisables (premieres taches de tous les jobs)
     	for(int j=0; j<instance.numJobs; j++) {
     		for(int t=1; t<instance.numTasks; t++) {
@@ -61,63 +59,36 @@ public class GreedySolver implements Solver {
     		}
     		realisable.add(new Task(j,0));
     	}
-    	/*    	
-    	switch (this.priority) {
-			case 0 : case 1 : //SPT LRPT
-				resource = new ResourceOrder(instance) ;
-				break;
-				
-			case 2 : case 3 : // EST_SPT EST_LRPT
-				resource = new ResourceOrder(sched) ;
-				break;
-		
-			default :
-				System.out.println("[GreegySolver] Bad priority \n");
-				break;
-    	}*/
+    	
+    	/* ---------------------------- RECHERCHE GLOUTONNE ------------------------------------------*/
     	    	
-    	//Tant qu’il y a des tâches réalisables
-    	while(!realisable.isEmpty()) {    		
+    	//Tant qu’il y a des taches realisables
+    	while(!realisable.isEmpty()) {    	
+    		//Choix de l'algorithme en fonction de la priorite
     		switch (this.priority) {
-	    		case 0 : //SPT
+	    		case 0 : //Shortest Process Time (SPT)
 	    			next = getSPT(realisable, instance);
-	    			//est = getSPT(realisable, instance, times, currentTimesPerMachine, currentTimesPerJob);
-	    			//next = est.getTask();
 	    			break;	    			
 	    			
-	    		case 1 : //LRPT
+	    		case 1 : //Longest Remaining Process Time (LRPT)
 	    			next = getLRPT(realisable, remainingTime, instance);
-	    			//est = getLRPT(realisable, remainingTime, instance, times, currentTimesPerMachine, currentTimesPerJob);
-	    			//next = est.getTask();
 	    			remainingTime[next.job] -= instance.duration(next);
-	    			break;
+	    			break;	    			
 	    			
-	    			
-	    		case 2 :  //EST_SPT
+	    		case 2 :  //EST_SPT (Amelioration SPT)
 	    			next = getEST_SPT(realisable, instance, currentTimesPerJob, currentTimesPerMachine);
 					currentTimesPerJob[next.job] += instance.duration(next);
 					currentTimesPerMachine[instance.machine(next)] += instance.duration(next);
 					break;
-					/*realisable = getEST(sched, realisable)
-	    			est = getSPT(realisable, instance, times, currentTimesPerMachine, currentTimesPerJob);
-	    			next = est.getTask();
-	    			sched = new Schedule(instance, times);
-	    			break;*/
 	    			
-	    		case 3 : //EST_LRPT
+	    		case 3 : //EST_LRPT (Amelioration LRPT)
 	    			next = getEST_LRPT(realisable, instance, currentTimesPerJob, currentTimesPerMachine, remainingTime);
-	    			//maj des tableaux 
+	    			//Mise a jour des tableaux des tableaux 
 	    			currentTimesPerJob[next.job] += instance.duration(next);
 	    			currentTimesPerMachine[instance.machine(next)] += instance.duration(next);
 	    			remainingTime[next.job] -= instance.duration(next);
 	    			break;
-	    			/*
-	    			realisable = getEST(sched, realisable);
-	    			est = getLRPT(realisable, remainingTime, instance, times, currentTimesPerMachine, currentTimesPerJob);
-	    			next = est.getTask();
-	    			sched = new Schedule(instance, times);
-	    			break;*/
-    		
+	    			
 	    		default :
 	    			System.out.println("[GreegySolver] Bad priority \n");
 	    			break;
@@ -125,6 +96,7 @@ public class GreedySolver implements Solver {
     		
     		int k=0;
             boolean trouve = false;
+            //Mise a jour des taches realisables et realisees
             while(k<toDo.size() && !trouve){
                 if(toDo.get(k).job == next.job){
                     if(toDo.get(k).task-1 == next.task){
@@ -135,20 +107,21 @@ public class GreedySolver implements Solver {
                 }
                 k++;
             }
+            //Mise a jour des tableaux
     		resource.tasksByMachine[instance.machine(next)][tasksPerJob[instance.machine(next)]]=next;
 			tasksPerJob[instance.machine(next)]++;
 			done.add(next);	    			
 			realisable.remove(next);
 			
+			//Gestion du timeout
 			if(deadline - System.currentTimeMillis() < 1){
                 return(new Result(instance,resource.toSchedule(),Result.ExitCause.Timeout));
             }
     	}
-
         return new Result(instance, resource.toSchedule(), Result.ExitCause.Blocked);
     }
     
-    
+    //Recupere la prochaine tache a executer selon SPT
     public Task getSPT(ArrayList<Task> realisable, Instance instance) {
     	int min = instance.duration(realisable.get(0));
     	Task minTask = realisable.get(0);
@@ -157,12 +130,11 @@ public class GreedySolver implements Solver {
     			min = instance.duration(task); 
     			minTask = task;
     		}
-    	}    	
-        //times[minTask.job][minTask.task]= min;
-        //currentTimesPerMachine[instance.machine(minTask)] += instance.duration(minTask);
-        return minTask;
+    	} 
+    	return minTask;
     }
     
+    //Recupere la prochaine tache a executer selon LRPT
     public Task getLRPT(ArrayList<Task> realisable, int[] remaining, Instance instance) {
     	int maxJob = 0;   
     	int max = -1;
@@ -179,10 +151,68 @@ public class GreedySolver implements Solver {
     			maxTask = t;
     		}
     	}    
-    	//times[maxTask.job][maxTask.task]= max;
-    	//currentTimesPerMachine[instance.machine(maxTask)] += instance.duration(maxTask);
     	return maxTask;    	
     }
+   
+    //Recherche la tache avant la date de debut maximale pour un job et une resource
+    public int getMaxJobMachine(Task t, Instance instance, int[] currentTimesPerMachine, int[] currentTimesPerJob) {
+    	int numJob=-1;
+    	if (currentTimesPerJob[t.job] > currentTimesPerMachine[instance.machine(t)]) {
+    		numJob = currentTimesPerJob[t.job];
+    	}
+    	else {
+    		numJob = currentTimesPerMachine[instance.machine(t)];
+    	}
+    	return numJob;
+    }
+
+    //Recupere la prochaine tache a executer selon EST_SPT
+    public Task getEST_SPT(ArrayList<Task> realisable, Instance instance, int[] currentTimesPerJob, int[] currentTimesPerMachine) {
+    	int min = Integer.MAX_VALUE;
+    	int aux;
+    	Task task = null;
+    	for (Task currentTask : realisable) {
+    		aux = getMaxJobMachine(currentTask, instance, currentTimesPerMachine, currentTimesPerJob);
+    		if (min > aux) { 
+    			min = aux;
+    			task = currentTask;
+    		}
+    		//si egalite entre les taches
+    		else if (min == aux) { 
+    			if (instance.duration(task) > instance.duration(currentTask)) {
+    				task = currentTask;
+    			}
+    		}		
+    	}
+    	if (task ==null) {
+    		System.out.println("[GREEDY SOLVER] getEST_SPT -> pas de tache trouvee \n");
+    	}
+    	return task;
+    }
+
+    //Recupere la prochaine tache a executer selon EST_LRPT
+    public Task getEST_LRPT(ArrayList<Task> realisable, Instance instance, int[] currentTimesPerJob, int[] currentTimesPerMachine, int[] remaining) {
+    	int min = Integer.MAX_VALUE;
+    	int aux;
+    	Task task = null;
+    	for (Task currentTask : realisable) {
+    		aux = getMaxJobMachine(currentTask, instance, currentTimesPerMachine, currentTimesPerJob);
+    		if (min > aux) {
+    			min = aux;
+    			task = currentTask;
+    		}
+    		else if (min == aux) {
+    			if (remaining[task.job] > remaining[currentTask.job]) {
+    				task = currentTask;
+    			}
+    		}		
+    	}
+    	if (task ==null) {
+    		System.out.println("[GREEDY SOLVER] getEST_LRPT -> pas de tache trouvee \n");
+    	}
+    	return task;
+    }
+    
     /*
     public ArrayList<Task> getEST(Schedule schedule, ArrayList<Task> realisable) {
         Instance pb = schedule.pb;
@@ -218,61 +248,4 @@ public class GreedySolver implements Solver {
         }
     	return tabMin;
     }*/
-    
-    public int getMaxJobMachine(Task t, Instance instance, int[] currentTimesPerMachine, int[] currentTimesPerJob) {
-    	int numJob=-1;
-    	if (currentTimesPerJob[t.job] > currentTimesPerMachine[instance.machine(t)]) {
-    		numJob = currentTimesPerJob[t.job];
-    	}
-    	else {
-    		numJob = currentTimesPerMachine[instance.machine(t)];
-    	}
-    	return numJob;
-    }
-
-    public Task getEST_SPT(ArrayList<Task> realisable, Instance instance, int[] currentTimesPerJob, int[] currentTimesPerMachine) {
-    	int min = Integer.MAX_VALUE;
-    	int aux;
-    	Task task = null;
-    	for (Task currentTask : realisable) {
-    		aux = getMaxJobMachine(currentTask, instance, currentTimesPerMachine, currentTimesPerJob);
-    		if (min > aux) { 
-    			min = aux;
-    			task = currentTask;
-    		}
-    		//si egalite entre les taches
-    		else if (min == aux) { 
-    			if (instance.duration(task) > instance.duration(currentTask)) {
-    				task = currentTask;
-    			}
-    		}		
-    	}
-    	if (task ==null) {
-    		System.out.println("[GREEDY SOLVER] getEST_SPT -> pas de tache trouvee \n");
-    	}
-    	return task;
-    }
-
-    public Task getEST_LRPT(ArrayList<Task> realisable, Instance instance, int[] currentTimesPerJob, int[] currentTimesPerMachine, int[] remaining) {
-    	int min = Integer.MAX_VALUE;
-    	int aux;
-    	Task task = null;
-    	for (Task currentTask : realisable) {
-    		aux = getMaxJobMachine(currentTask, instance, currentTimesPerMachine, currentTimesPerJob);
-    		if (min > aux) {
-    			min = aux;
-    			task = currentTask;
-    		}
-    		else if (min == aux) {
-    			if (remaining[task.job] > remaining[currentTask.job]) {
-    				task = currentTask;
-    			}
-    		}		
-    	}
-    	if (task ==null) {
-    		System.out.println("[GREEDY SOLVER] getEST_LRPT -> pas de tache trouvee \n");
-    	}
-    	return task;
-    }
-    
 }

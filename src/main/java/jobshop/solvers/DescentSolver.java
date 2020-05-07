@@ -78,7 +78,7 @@ public class DescentSolver implements Solver {
        
     @Override
     public Result solve(Instance instance, long deadline) {
-    	//Initialisation
+    	/* ---------------------------------- INITIALISATION ----------------------------------------*/
     	GreedySolver greedy = new GreedySolver(2);
     	Result pb = greedy.solve(instance, deadline);
     	//Memorisation de la solution
@@ -90,7 +90,8 @@ public class DescentSolver implements Solver {
     	List<Swap> swapTodo = new ArrayList<Swap>();
     	List<ResourceOrder> neighborsPb = new ArrayList<ResourceOrder>();
     	boolean improve = true;
-    	
+
+    	/* --------------------- EXPLORATION DES VOISINAGES -----------------------------------------*/
     	//Creation du voisinage de la solution
     	for (int i=0; i<blocks.size()-1; i++) {    		
     		for (Swap s : neighbors(blocks.get(i))) {
@@ -102,11 +103,11 @@ public class DescentSolver implements Solver {
     		orderSol = new ResourceOrder(solution.schedule);
     		s.applyOn(orderSol);
     		neighborsPb.add(orderSol);
-    	}    	    	    	
+    	}    
     	//Exploration des voisinages successifs pour trouver le meilleur voisin
     	while(improve && (deadline - System.currentTimeMillis() >= 1)) {
     		improve = false;
-    		//Recherche du meilleur voisin
+        	/* --------------------- RECHERCHE DU MEILLEUR VOISIN -----------------------------------*/
     		for (ResourceOrder resource : neighborsPb) {
     			aux = new Result(resource.instance, resource.toSchedule(), solution.cause); //solution.provedOptimal ??
     			//Si la solution est améliorante, on retient le voisin
@@ -120,8 +121,7 @@ public class DescentSolver implements Solver {
     }
 
     /** Returns a list of all blocks of the critical path. */
-    List<Block> blocksOfCriticalPath(ResourceOrder order) {
-    	
+    List<Block> blocksOfCriticalPath(ResourceOrder order) {    	
     	List<Block> list = new ArrayList<Block>();
     	Schedule sched = order.toSchedule();
     	Instance instance = sched.pb;
@@ -145,7 +145,8 @@ public class DescentSolver implements Solver {
 		    		first = getIndex(order.tasksByMachine[instance.machine(previous)], previous);
 		    		belongs = 1;
     			}
-    		}		    	
+    		}
+    		//La tache est executee successivement a une autre tache sur la meme machine
 		    else if(!(instance.machine(current) == instance.machine(previous))) {
 	    		last = getIndex(order.tasksByMachine[instance.machine(previous)], previous);
 	    		list.add(new Block(instance.machine(previous), first, last));
@@ -155,7 +156,7 @@ public class DescentSolver implements Solver {
 	    	}
     		previous = current;   
     	}
-    	//Cas du dernier bloc
+    	//Gestion du cas du dernier bloc
     	if (first != Integer.MIN_VALUE) {
     		last = getIndex(order.tasksByMachine[instance.machine(previous)], previous); 
     		list.add(new Block(instance.machine(previous), first, last));
